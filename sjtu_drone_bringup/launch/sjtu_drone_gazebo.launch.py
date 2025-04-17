@@ -11,6 +11,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 import xacro
 
+
 def generate_launch_description():
 
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
@@ -22,7 +23,13 @@ def generate_launch_description():
     )
     robot_description_config = xacro.process_file(xacro_file)
     robot_desc = robot_description_config.toxml()
-    model_ns = "drone"
+
+    drone_name = LaunchConfiguration('drone_name')
+    name_space = LaunchConfiguration('name_space')
+
+
+
+    model_ns = drone_name
 
     world_file = os.path.join(
         get_package_share_directory("sjtu_drone_description"),
@@ -30,13 +37,18 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+
+        DeclareLaunchArgument('name_space', default_value='drone'),
+        DeclareLaunchArgument('name_space', default_value='drone'),
+
         Node(
             package="robot_state_publisher",
             executable="robot_state_publisher",
             name="robot_state_publisher",
-            # namespace=model_ns,
+            namespace=name_space,
             output="screen",
-            parameters=[{"use_sim_time": use_sim_time, "robot_description": robot_desc}],
+            parameters=[{"use_sim_time": use_sim_time,
+                         "robot_description": robot_desc}],
             arguments=[robot_desc]
         ),
 
@@ -44,30 +56,32 @@ def generate_launch_description():
             package='joint_state_publisher',
             executable='joint_state_publisher',
             name='joint_state_publisher',
-            # namespace=model_ns,
+            namespace=name_space,
             output='screen',
         ),
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
-            ),
-            launch_arguments={
-                              'verbose': "true",
-                              'extra_gazebo_args': 'verbose'}.items()
-        ),
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(
+        #         os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
+        #     ),
+        #     launch_arguments={
+        #                       'verbose': "true",
+        #                       'extra_gazebo_args': 'verbose'}.items()
+        # ),
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
-            ),
-            launch_arguments={'verbose': "true"}.items()
-        ),
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(
+        #         os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
+        #     ),
+        #     launch_arguments={'verbose': "true"}.items()
+        # ),
 
         Node(
             package="sjtu_drone_bringup",
             executable="spawn_drone",
             arguments=[robot_desc, model_ns],
+            namespace=name_space,
             output="screen"
-        )
+        ),
+
     ])

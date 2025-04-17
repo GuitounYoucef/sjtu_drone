@@ -39,7 +39,7 @@ def generate_launch_description():
         Node(
             package="teleop_twist_keyboard",
             executable="teleop_twist_keyboard",
-            namespace="drone",
+            # namespace="drone2",
             output="screen",
             prefix="xterm -e"
         )
